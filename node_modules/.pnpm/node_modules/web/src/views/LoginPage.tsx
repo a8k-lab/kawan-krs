@@ -1,0 +1,206 @@
+import React, { useState } from 'react';
+import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, UserCheck, ShieldCheck, GraduationCap as StudentIcon } from 'lucide-react';
+
+interface LoginPageProps {
+  onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin') => void;
+}
+
+export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
+  const [email, setEmail] = useState('nadya.salsabila@kawankrs.ac.id');
+  const [password, setPassword] = useState('SecretPassword123');
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleQuickLogin = (role: 'mahasiswa' | 'dosen' | 'admin', demoEmail: string) => {
+    setEmail(demoEmail);
+    setPassword('SecretPassword123');
+    onNavigate(role);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email.includes('wisnu') || email.includes('dosen')) {
+      onNavigate('dosen');
+    } else if (email.includes('admin') || email.includes('siti') || email.includes('rina')) {
+      onNavigate('admin');
+    } else {
+      onNavigate('mahasiswa');
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-50 font-sans">
+      {/* Left Pane - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#8b1818] flex-col justify-between p-12 text-white relative overflow-hidden select-none">
+        {/* Background decorative curved blobs */}
+        <div className="absolute top-0 right-0 -mr-24 -mt-24 w-[500px] h-[500px] bg-[#a72020] rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+        <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-[450px] h-[450px] bg-[#671010] rounded-full opacity-50 blur-3xl pointer-events-none"></div>
+        
+        {/* Top Header Logo */}
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="p-2.5 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20 shadow-inner">
+            <GraduationCap className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold tracking-tight">KawanKRS</h1>
+            <p className="text-xs text-red-200">Sistem Perencanaan Studi Cerdas</p>
+          </div>
+        </div>
+
+        {/* Center Tagline */}
+        <div className="relative z-10 my-auto py-12 max-w-lg">
+          <h2 className="text-5xl font-extrabold leading-[1.15] mb-6 tracking-tight">
+            Rencanakan<br />Studi, Wujudkan<br />Masa Depan
+          </h2>
+          <p className="text-lg text-red-100/90 leading-relaxed font-light">
+            KawanKRS membantu pengelolaan akademik yang lebih mudah dan terintegrasi untuk mendukung keberhasilan mahasiswa.
+          </p>
+        </div>
+
+        {/* Cityscape decorative bottom */}
+        <div className="relative z-10 pt-8 border-t border-white/10 flex items-center justify-between text-xs text-red-200/80">
+          <span>Telkom University • Fasilkom</span>
+          <span>Edisi Kurikulum 2024/2025</span>
+        </div>
+
+        {/* Abstract Cityscape Graphic */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 flex items-end opacity-20 pointer-events-none">
+          <div className="w-16 h-12 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-24 h-24 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-12 h-32 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-32 h-16 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-20 h-28 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-28 h-20 bg-white mx-1 rounded-t-sm"></div>
+          <div className="w-16 h-12 bg-white mx-1 rounded-t-sm"></div>
+        </div>
+      </div>
+
+      {/* Right Pane - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
+        <div className="w-full max-w-md">
+          {/* Header Title */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Masuk ke KawanKRS</h2>
+            <p className="text-sm text-gray-500">Silakan masuk dengan akun akademik Anda</p>
+          </div>
+
+          {/* Quick Demo Selector */}
+          <div className="mb-6 p-3.5 bg-red-50/60 border border-red-100 rounded-xl">
+            <p className="text-xs font-semibold text-red-800 mb-2.5 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+              Pilih Akun Contoh (Demo Role):
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('mahasiswa', 'nadya.salsabila@kawankrs.ac.id')}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+              >
+                <StudentIcon className="w-4 h-4 text-red-700 mb-1 group-hover:scale-110 transition-transform" />
+                <span className="text-[11px] font-bold">Mahasiswa</span>
+                <span className="text-[9px] text-gray-500">Nadya</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('dosen', 'wisnu.jatmiko@kawankrs.ac.id')}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+              >
+                <UserCheck className="w-4 h-4 text-blue-700 mb-1 group-hover:scale-110 transition-transform" />
+                <span className="text-[11px] font-bold">Dosen PA</span>
+                <span className="text-[9px] text-gray-500">Prof. Wisnu</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('admin', 'rina.marlina@kawankrs.ac.id')}
+                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-700 mb-1 group-hover:scale-110 transition-transform" />
+                <span className="text-[11px] font-bold">Admin</span>
+                <span className="text-[9px] text-gray-500">Rina Marlina</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Email Akademik / NIM / NIP</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <Mail className="h-4 w-4" />
+                </div>
+                <input 
+                  type="text" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="nama@kawankrs.ac.id" 
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Password</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                  <Lock className="h-4 w-4" />
+                </div>
+                <input 
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••" 
+                  required
+                  className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                />
+                <button 
+                  type="button" 
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" defaultChecked className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-500 accent-red-600" />
+                <span className="text-xs text-gray-600">Ingat saya</span>
+              </label>
+              <a href="#forgot" onClick={(e) => e.preventDefault()} className="text-xs font-semibold text-red-700 hover:text-red-800">
+                Lupa password?
+              </a>
+            </div>
+
+            <button 
+              type="submit" 
+              className="w-full bg-[#8b1818] hover:bg-[#721313] text-white font-medium py-3 px-4 rounded-xl transition-all shadow-md shadow-red-950/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99]"
+            >
+              <span>Masuk</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+
+          {/* Switch to Register */}
+          <div className="mt-6 text-center">
+            <p className="text-xs text-gray-600">
+              Belum memiliki akun KawanKRS?{' '}
+              <button 
+                type="button" 
+                onClick={() => onNavigate('register')}
+                className="font-bold text-red-700 hover:text-red-800 hover:underline cursor-pointer"
+              >
+                Daftar sekarang
+              </button>
+            </p>
+          </div>
+          
+          <div className="mt-12 text-center border-t border-gray-100 pt-6">
+            <p className="text-[11px] text-gray-400">© 2026 KawanKRS • Sistem Cerdas Rekomendasi Rencana Studi</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

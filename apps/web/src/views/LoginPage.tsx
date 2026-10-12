@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
-import { GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, UserCheck, ShieldCheck, GraduationCap as StudentIcon } from 'lucide-react';
+import { 
+  GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, UserCheck, 
+  ShieldCheck, ShieldAlert, GraduationCap as StudentIcon 
+} from 'lucide-react';
 
 interface LoginPageProps {
-  onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin') => void;
+  onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin' | 'superadmin') => void;
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState('nadya.salsabila@kawankrs.ac.id');
   const [password, setPassword] = useState('SecretPassword123');
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<'mahasiswa' | 'dosen' | 'admin' | 'superadmin'>('mahasiswa');
 
-  const handleQuickLogin = (role: 'mahasiswa' | 'dosen' | 'admin', demoEmail: string) => {
+  const handleSelectDemoAccount = (role: 'mahasiswa' | 'dosen' | 'admin' | 'superadmin', demoEmail: string) => {
     setEmail(demoEmail);
     setPassword('SecretPassword123');
-    onNavigate(role);
+    setSelectedRole(role);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.includes('wisnu') || email.includes('dosen')) {
+    if (email.includes('sarah') || email.includes('super')) {
+      onNavigate('superadmin');
+    } else if (email.includes('wisnu') || email.includes('dosen')) {
       onNavigate('dosen');
     } else if (email.includes('admin') || email.includes('siti') || email.includes('rina')) {
       onNavigate('admin');
@@ -31,7 +37,6 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
     <div className="flex min-h-screen bg-gray-50 font-sans">
       {/* Left Pane - Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#8b1818] flex-col justify-between p-12 text-white relative overflow-hidden select-none">
-        {/* Background decorative curved blobs */}
         <div className="absolute top-0 right-0 -mr-24 -mt-24 w-[500px] h-[500px] bg-[#a72020] rounded-full opacity-40 blur-2xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-24 -mb-24 w-[450px] h-[450px] bg-[#671010] rounded-full opacity-50 blur-3xl pointer-events-none"></div>
         
@@ -78,50 +83,85 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-white">
         <div className="w-full max-w-md">
           {/* Header Title */}
-          <div className="mb-8">
+          <div className="mb-6">
             <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Masuk ke KawanKRS</h2>
             <p className="text-sm text-gray-500">Silakan masuk dengan akun akademik Anda</p>
           </div>
 
-          {/* Quick Demo Selector */}
+          {/* Quick Demo Autofill Selector (4 Roles) */}
           <div className="mb-6 p-3.5 bg-red-50/60 border border-red-100 rounded-xl">
-            <p className="text-xs font-semibold text-red-800 mb-2.5 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
-              Pilih Akun Contoh (Demo Role):
+            <p className="text-xs font-semibold text-red-800 mb-2 flex items-center justify-between">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+                Isi Otomatis Akun Contoh (Demo Role):
+              </span>
+              <span className="text-[10px] text-gray-500 font-normal">Klik untuk mengisi form</span>
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {/* Mahasiswa */}
               <button
                 type="button"
-                onClick={() => handleQuickLogin('mahasiswa', 'nadya.salsabila@kawankrs.ac.id')}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+                onClick={() => handleSelectDemoAccount('mahasiswa', 'nadya.salsabila@kawankrs.ac.id')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all shadow-xs cursor-pointer ${
+                  selectedRole === 'mahasiswa' && email.includes('nadya')
+                    ? 'bg-red-600 text-white border-red-700 ring-2 ring-red-500/30'
+                    : 'bg-white border-red-200 hover:border-red-600 hover:bg-red-50/80 text-gray-800'
+                }`}
               >
-                <StudentIcon className="w-4 h-4 text-red-700 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-bold">Mahasiswa</span>
-                <span className="text-[9px] text-gray-500">Nadya</span>
+                <StudentIcon className={`w-3.5 h-3.5 mb-1 ${selectedRole === 'mahasiswa' && email.includes('nadya') ? 'text-white' : 'text-red-700'}`} />
+                <span className="text-[10px] font-bold">Mahasiswa</span>
+                <span className={`text-[8px] ${selectedRole === 'mahasiswa' && email.includes('nadya') ? 'text-red-100' : 'text-gray-500'}`}>Nadya</span>
               </button>
+
+              {/* Dosen PA */}
               <button
                 type="button"
-                onClick={() => handleQuickLogin('dosen', 'wisnu.jatmiko@kawankrs.ac.id')}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+                onClick={() => handleSelectDemoAccount('dosen', 'wisnu.jatmiko@kawankrs.ac.id')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all shadow-xs cursor-pointer ${
+                  selectedRole === 'dosen' && email.includes('wisnu')
+                    ? 'bg-red-600 text-white border-red-700 ring-2 ring-red-500/30'
+                    : 'bg-white border-red-200 hover:border-red-600 hover:bg-red-50/80 text-gray-800'
+                }`}
               >
-                <UserCheck className="w-4 h-4 text-blue-700 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-bold">Dosen PA</span>
-                <span className="text-[9px] text-gray-500">Prof. Wisnu</span>
+                <UserCheck className={`w-3.5 h-3.5 mb-1 ${selectedRole === 'dosen' && email.includes('wisnu') ? 'text-white' : 'text-blue-700'}`} />
+                <span className="text-[10px] font-bold">Dosen PA</span>
+                <span className={`text-[8px] ${selectedRole === 'dosen' && email.includes('wisnu') ? 'text-red-100' : 'text-gray-500'}`}>Prof. Wisnu</span>
               </button>
+
+              {/* Admin */}
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin', 'rina.marlina@kawankrs.ac.id')}
-                className="flex flex-col items-center justify-center p-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-gray-800 transition-all shadow-xs group cursor-pointer"
+                onClick={() => handleSelectDemoAccount('admin', 'rina.marlina@kawankrs.ac.id')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all shadow-xs cursor-pointer ${
+                  selectedRole === 'admin' && email.includes('rina')
+                    ? 'bg-red-600 text-white border-red-700 ring-2 ring-red-500/30'
+                    : 'bg-white border-red-200 hover:border-red-600 hover:bg-red-50/80 text-gray-800'
+                }`}
               >
-                <ShieldCheck className="w-4 h-4 text-emerald-700 mb-1 group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-bold">Admin</span>
-                <span className="text-[9px] text-gray-500">Rina Marlina</span>
+                <ShieldCheck className={`w-3.5 h-3.5 mb-1 ${selectedRole === 'admin' && email.includes('rina') ? 'text-white' : 'text-emerald-700'}`} />
+                <span className="text-[10px] font-bold">Admin</span>
+                <span className={`text-[8px] ${selectedRole === 'admin' && email.includes('rina') ? 'text-red-100' : 'text-gray-500'}`}>Rina Marlina</span>
+              </button>
+
+              {/* Super Admin */}
+              <button
+                type="button"
+                onClick={() => handleSelectDemoAccount('superadmin', 'sarah.jenkins@kawankrs.ac.id')}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg border transition-all shadow-xs cursor-pointer ${
+                  selectedRole === 'superadmin' && email.includes('sarah')
+                    ? 'bg-red-600 text-white border-red-700 ring-2 ring-red-500/30'
+                    : 'bg-white border-red-200 hover:border-red-600 hover:bg-red-50/80 text-gray-800'
+                }`}
+              >
+                <ShieldAlert className={`w-3.5 h-3.5 mb-1 ${selectedRole === 'superadmin' && email.includes('sarah') ? 'text-white' : 'text-purple-700'}`} />
+                <span className="text-[10px] font-bold">Super Admin</span>
+                <span className={`text-[8px] ${selectedRole === 'superadmin' && email.includes('sarah') ? 'text-red-100' : 'text-gray-500'}`}>Dr. Sarah</span>
               </button>
             </div>
           </div>
 
-          {/* Form */}
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          {/* Form Login Asli (Email & Password) */}
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-gray-700 uppercase tracking-wider">Email Akademik / NIM / NIP</label>
               <div className="relative">

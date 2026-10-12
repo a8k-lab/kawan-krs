@@ -2,8 +2,8 @@ import React from 'react';
 import { UserCheck, ShieldCheck, GraduationCap, LogIn, UserPlus } from 'lucide-react';
 
 interface RoleSwitcherProps {
-  currentView: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin';
-  onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin') => void;
+  currentView: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin' | 'superadmin';
+  onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin' | 'superadmin') => void;
 }
 
 export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ currentView, onNavigate }) => {
@@ -71,6 +71,18 @@ export const RoleSwitcher: React.FC<RoleSwitcherProps> = ({ currentView, onNavig
       >
         <ShieldCheck className="w-3.5 h-3.5" />
         <span className="hidden sm:inline">Admin</span>
+      </button>
+
+      <button
+        type="button"
+        onClick={() => onNavigate('superadmin')}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full font-semibold transition cursor-pointer ${
+          currentView === 'superadmin' ? 'bg-[#8b1818] text-white shadow-sm' : 'text-slate-300 hover:text-white hover:bg-slate-800'
+        }`}
+        title="Buka Antarmuka Super Admin"
+      >
+        <ShieldCheck className="w-3.5 h-3.5 text-rose-400" />
+        <span className="hidden sm:inline">Super Admin</span>
       </button>
     </aside>
   );

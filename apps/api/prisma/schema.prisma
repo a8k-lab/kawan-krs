@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RoleCode {
+  MAHASISWA
+  DOSEN
+  ADMIN
+  SUPERADMIN
+}
+
+// 1. auth_users: Kredensial Otentikasi Utama
+model AuthUser {
+  id           String           @id @default(uuid()) @db.Uuid
+  email        String           @unique @db.VarChar(255)
+  passwordHash String           @map("password_hash") @db.VarChar(255)
+  isActive     Boolean          @default(true) @map("is_active")
+  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+
+  detail       AuthUserDetail?
+  sessions     AuthUserSession[]
+
+  // Relasi Dosen Pembimbing PA (satu Dosen PA bisa membimbing banyak mahasiswa)
+  advisees     AuthUserDetail[] @relation("AdvisorRelation")
+
+  @@map("auth_users")
+}
+
+// 2. auth_roles: Master Peran
+model AuthRole {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        RoleCode         @unique
+  name        String           @db.VarChar(100)
+  description String?          @db.Text
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
+
+  users       AuthUserDetail[]
+
+  @@map("auth_roles")
+}
+
+// 3. auth_user_details: Seluruh Informasi Civitas Akademika (Mahasiswa, Dosen, Admin)
+model AuthUserDetail {
+  id           String       @id @default(uuid()) @db.Uuid
+  userId       String       @unique @map("user_id") @db.Uuid
+  roleId       String       @map("role_id") @db.Uuid
+  
+  // Identifier menampung NIM (Mahasiswa), NIP (Dosen), atau ID Pegawai (Admin)
+  identifier   String       @unique @db.VarChar(50)
+  fullName     String       @map("full_name") @db.VarChar(150)
+  faculty      String?      @db.VarChar(100)
+  studyProgram String?      @map("study_program") @db.VarChar(100)
+  
+  // Atribut spesifik Mahasiswa (NULL untuk Dosen/Admin)
+  cohort       String?      @db.VarChar(4) // Angkatan, e.g. "2024"
+  gpa          Decimal?     @db.Decimal(3, 2) // IPK, e.g. 3.82
+  totalCredits Int?         @default(0) @map("total_credits") // SKS Lulus, e.g. 114
+  advisorId    String?      @map("advisor_id") @db.Uuid // Relasi ke AuthUser Dosen PA
+  
+  // Atribut spesifik Dosen (NULL untuk Mahasiswa)
+  title        String?      @db.VarChar(100) // Gelar, e.g. "Prof. Dr. Ir."
+
+  // Atribut profil umum
+  avatarUrl    String?      @map("avatar_url") @db.VarChar(255)
+  phoneNumber  String?      @map("phone_number") @db.VarChar(20)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Relasi
+  user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role         AuthRole     @relation(fields: [roleId], references: [id])
+  advisor      AuthUser?    @relation("AdvisorRelation", fields: [advisorId], references: [id])
+
+  @@map("auth_user_details")
+}
+
+// 4. auth_user_sessions: Sesi Login & Manajemen Refresh Token
+model AuthUserSession {
+  id               String       @id @default(uuid()) @db.Uuid
+  userId           String       @map("user_id") @db.Uuid
+  refreshTokenHash String       @map("refresh_token_hash") @db.VarChar(255)
+  userAgent        String?      @map("user_agent") @db.Text
+  ipAddress        String?      @map("ip_address") @db.VarChar(45)
+  isRevoked        Boolean      @default(false) @map("is_revoked")
+  expiresAt        DateTime     @map("expires_at") @db.Timestamptz
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+
+  user             AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("auth_user_sessions")
+}

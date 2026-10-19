@@ -12,12 +12,19 @@
     "dev": "tsx watch src/server.ts",
     "build": "tsc"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
+    "@prisma/client": "^6.19.3",
+    "bcryptjs": "^3.0.3",
     "hono": "^4.6.14"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^22.10.2",
+    "prisma": "6.19.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

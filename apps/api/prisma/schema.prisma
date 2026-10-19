@@ -14,12 +14,71 @@ enum RoleCode {
   SUPERADMIN
 }
 
-// 1. auth_users: Kredensial Otentikasi Utama
+// ==========================================
+// 1. MODUL AKADEMIK (acad_)
+// ==========================================
+
+// Master Fakultas
+model AcadFaculty {
+  id          Int                 @id @default(autoincrement())
+  uuid        String              @unique @default(uuid()) @db.Uuid
+  code        String              @unique @db.VarChar(50) // e.g. "FIF"
+  name        String              @db.VarChar(150)        // e.g. "Fakultas Informatika"
+  description String?             @db.Text
+
+  // Audit Trail & Lifecycle
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   BigInt              @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt   BigInt              @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt   BigInt?             @map("deleted_at")
+  createdBy   Int?                @map("created_by")
+  updatedBy   Int?                @map("updated_by")
+  deletedBy   Int?                @map("deleted_by")
+  version     Int                 @default(1) @map("version")
+
+  // Relasi
+  studyPrograms AcadStudyProgram[]
+  userDetails   AuthUserDetail[]
+
+  @@map("acad_faculties")
+}
+
+// Master Program Studi (Memiliki relasi ke Fakultas)
+model AcadStudyProgram {
+  id          Int                 @id @default(autoincrement())
+  uuid        String              @unique @default(uuid()) @db.Uuid
+  facultyId   Int                 @map("faculty_id")
+  code        String              @unique @db.VarChar(50) // e.g. "PJJ-IF"
+  name        String              @db.VarChar(150)        // e.g. "S1 PJJ Informatika"
+  degree      String?             @db.VarChar(20)         // e.g. "S1"
+
+  // Audit Trail & Lifecycle
+  isActive    Boolean             @default(true) @map("is_active")
+  createdAt   BigInt              @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt   BigInt              @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt   BigInt?             @map("deleted_at")
+  createdBy   Int?                @map("created_by")
+  updatedBy   Int?                @map("updated_by")
+  deletedBy   Int?                @map("deleted_by")
+  version     Int                 @default(1) @map("version")
+
+  // Relasi
+  faculty     AcadFaculty         @relation(fields: [facultyId], references: [id], onDelete: Restrict)
+  userDetails AuthUserDetail[]
+
+  @@map("acad_study_programs")
+}
+
+// ==========================================
+// 2. MODUL AUTENTIKASI & PENGGUNA (auth_)
+// ==========================================
+
+// auth_users: Kredensial Otentikasi Utama
 model AuthUser {
   id           Int              @id @default(autoincrement())
   uuid         String           @unique @default(uuid()) @db.Uuid
   email        String           @unique @db.VarChar(255)
-  passwordHash String           @map("password_hash") @db.VarChar(255)
+  password     String           @map("password") @db.VarChar(255)
   
   // Audit Trail & Lifecycle
   isActive     Boolean          @default(true) @map("is_active")
@@ -41,7 +100,7 @@ model AuthUser {
   @@map("auth_users")
 }
 
-// 2. auth_roles: Master Peran
+// auth_roles: Master Peran
 model AuthRole {
   id          Int              @id @default(autoincrement())
   uuid        String           @unique @default(uuid()) @db.Uuid
@@ -64,51 +123,55 @@ model AuthRole {
   @@map("auth_roles")
 }
 
-// 3. auth_user_details: Seluruh Informasi Civitas Akademika
+// auth_user_details: Seluruh Informasi Civitas Akademika
 model AuthUserDetail {
-  id           Int          @id @default(autoincrement())
-  uuid         String       @unique @default(uuid()) @db.Uuid
-  userId       Int          @unique @map("user_id")
-  roleId       Int          @map("role_id")
+  id             Int               @id @default(autoincrement())
+  uuid           String            @unique @default(uuid()) @db.Uuid
+  userId         Int               @unique @map("user_id")
+  roleId         Int               @map("role_id")
   
   // Identifier menampung NIM (Mahasiswa), NIP (Dosen), atau ID Pegawai (Admin)
-  identifier   String       @unique @db.VarChar(50)
-  fullName     String       @map("full_name") @db.VarChar(150)
-  faculty      String?      @db.VarChar(100)
-  studyProgram String?      @map("study_program") @db.VarChar(100)
+  identifier     String            @unique @db.VarChar(50)
+  fullName       String            @map("full_name") @db.VarChar(150)
+
+  // Relasi ke Master Fakultas & Program Studi
+  facultyId      Int?              @map("faculty_id")
+  studyProgramId Int?              @map("study_program_id")
   
   // Atribut spesifik Mahasiswa (NULL untuk Dosen/Admin)
-  cohort       String?      @db.VarChar(4) // Angkatan, e.g. "2024"
-  gpa          Decimal?     @db.Decimal(3, 2) // IPK, e.g. 3.82
-  totalCredits Int?         @default(0) @map("total_credits") // SKS Lulus, e.g. 114
-  advisorId    Int?         @map("advisor_id") // Relasi ke auth_users(id) Dosen PA
+  cohort         String?           @db.VarChar(4) // Tahun Angkatan Masuk Mahasiswa, e.g. "2024"
+  gpa            Decimal?          @db.Decimal(3, 2) // IPK, e.g. 3.82
+  totalCredits   Int?              @default(0) @map("total_credits") // SKS Lulus, e.g. 114
+  advisorId      Int?              @map("advisor_id") // Relasi ke auth_users(id) Dosen PA
   
   // Atribut spesifik Dosen (NULL untuk Mahasiswa)
-  title        String?      @db.VarChar(100) // Gelar, e.g. "Prof. Dr. Ir."
+  title          String?           @db.VarChar(100) // Gelar Akademik, e.g. "Prof. Dr. Ir."
 
   // Profil umum
-  avatarUrl    String?      @map("avatar_url") @db.VarChar(255)
-  phoneNumber  String?      @map("phone_number") @db.VarChar(20)
+  avatarUrl      String?           @map("avatar_url") @db.VarChar(255)
+  phoneNumber    String?           @map("phone_number") @db.VarChar(20)
 
   // Audit Trail & Lifecycle
-  isActive     Boolean      @default(true) @map("is_active")
-  createdAt    BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
-  updatedAt    BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
-  deletedAt    BigInt?      @map("deleted_at")
-  createdBy    Int?         @map("created_by")
-  updatedBy    Int?         @map("updated_by")
-  deletedBy    Int?         @map("deleted_by")
-  version      Int          @default(1) @map("version")
+  isActive       Boolean           @default(true) @map("is_active")
+  createdAt      BigInt            @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt      BigInt            @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt      BigInt?           @map("deleted_at")
+  createdBy      Int?              @map("created_by")
+  updatedBy      Int?              @map("updated_by")
+  deletedBy      Int?              @map("deleted_by")
+  version        Int               @default(1) @map("version")
 
   // Relasi
-  user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role         AuthRole     @relation(fields: [roleId], references: [id])
-  advisor      AuthUser?    @relation("AdvisorRelation", fields: [advisorId], references: [id])
+  user           AuthUser          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           AuthRole          @relation(fields: [roleId], references: [id])
+  advisor        AuthUser?         @relation("AdvisorRelation", fields: [advisorId], references: [id])
+  faculty        AcadFaculty?      @relation(fields: [facultyId], references: [id])
+  studyProgram   AcadStudyProgram? @relation(fields: [studyProgramId], references: [id])
 
   @@map("auth_user_details")
 }
 
-// 4. auth_user_sessions: Sesi Login & Manajemen Refresh Token
+// auth_user_sessions: Sesi Login & Manajemen Refresh Token
 model AuthUserSession {
   id               Int          @id @default(autoincrement())
   uuid             String       @unique @default(uuid()) @db.Uuid

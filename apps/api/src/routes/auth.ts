@@ -80,13 +80,13 @@ authRoutes.post('/register', async (c) => {
     }
 
     // Hash password
-    const passwordHash = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Buat akun di auth_users dan profil di auth_user_details
     const newUser = await prisma.authUser.create({
       data: {
         email: email.toLowerCase().trim(),
-        passwordHash,
+        password: hashedPassword,
         isActive: true,
         detail: {
           create: {
@@ -158,6 +158,8 @@ authRoutes.post('/login', async (c) => {
         detail: {
           include: {
             role: true,
+            faculty: true,
+            studyProgram: true,
             advisor: {
               include: {
                 detail: true,
@@ -183,7 +185,7 @@ authRoutes.post('/login', async (c) => {
     }
 
     // Verifikasi password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return c.json({
         success: false,
@@ -218,8 +220,19 @@ authRoutes.post('/login', async (c) => {
           role: user.detail?.role.code.toLowerCase(), // 'mahasiswa' | 'dosen' | 'admin' | 'superadmin'
           fullName: user.detail?.fullName,
           identifier: user.detail?.identifier,
-          faculty: user.detail?.faculty,
-          studyProgram: user.detail?.studyProgram,
+          faculty: user.detail?.faculty ? {
+            id: user.detail.faculty.id,
+            uuid: user.detail.faculty.uuid,
+            code: user.detail.faculty.code,
+            name: user.detail.faculty.name,
+          } : null,
+          studyProgram: user.detail?.studyProgram ? {
+            id: user.detail.studyProgram.id,
+            uuid: user.detail.studyProgram.uuid,
+            code: user.detail.studyProgram.code,
+            name: user.detail.studyProgram.name,
+            degree: user.detail.studyProgram.degree,
+          } : null,
           cohort: user.detail?.cohort,
           gpa: user.detail?.gpa ? user.detail.gpa.toString() : null,
           totalCredits: user.detail?.totalCredits,

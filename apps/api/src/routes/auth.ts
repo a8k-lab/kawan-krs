@@ -111,6 +111,7 @@ authRoutes.post('/register', async (c) => {
       message: 'Pendaftaran akun KawanKRS berhasil! Silakan masuk.',
       data: {
         id: newUser.id,
+        uuid: newUser.uuid,
         email: newUser.email,
         fullName: newUser.detail?.fullName,
         identifier: newUser.detail?.identifier,
@@ -147,9 +148,10 @@ authRoutes.post('/login', async (c) => {
     // Cari user berdasarkan email ATAU identifier (NIM/NIP) di auth_user_details
     const user = await prisma.authUser.findFirst({
       where: {
+        deletedAt: null,
         OR: [
           { email: trimmedIdentifier.toLowerCase() },
-          { detail: { identifier: trimmedIdentifier } },
+          { detail: { identifier: trimmedIdentifier, deletedAt: null } },
         ],
       },
       include: {
@@ -189,11 +191,10 @@ authRoutes.post('/login', async (c) => {
       }, 401);
     }
 
-    // Catat session login di auth_user_sessions
+    // Catat session login di auth_user_sessions (expiresAt dalam epoch detik)
     const sessionToken = crypto.randomUUID();
     const sessionHash = await bcrypt.hash(sessionToken, 10);
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); // Berlaku 7 hari
+    const expiresAt = BigInt(Math.floor((Date.now() + 7 * 24 * 60 * 60 * 1000) / 1000));
 
     await prisma.authUserSession.create({
       data: {
@@ -212,6 +213,7 @@ authRoutes.post('/login', async (c) => {
         sessionToken,
         user: {
           id: user.id,
+          uuid: user.uuid,
           email: user.email,
           role: user.detail?.role.code.toLowerCase(), // 'mahasiswa' | 'dosen' | 'admin' | 'superadmin'
           fullName: user.detail?.fullName,
@@ -219,11 +221,12 @@ authRoutes.post('/login', async (c) => {
           faculty: user.detail?.faculty,
           studyProgram: user.detail?.studyProgram,
           cohort: user.detail?.cohort,
-          gpa: user.detail?.gpa,
+          gpa: user.detail?.gpa ? user.detail.gpa.toString() : null,
           totalCredits: user.detail?.totalCredits,
           title: user.detail?.title,
           advisor: user.detail?.advisor ? {
             id: user.detail.advisor.id,
+            uuid: user.detail.advisor.uuid,
             fullName: user.detail.advisor.detail?.fullName,
             title: user.detail.advisor.detail?.title,
           } : null,

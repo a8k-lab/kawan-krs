@@ -16,17 +16,26 @@ enum RoleCode {
 
 // 1. auth_users: Kredensial Otentikasi Utama
 model AuthUser {
-  id           String           @id @default(uuid()) @db.Uuid
+  id           Int              @id @default(autoincrement())
+  uuid         String           @unique @default(uuid()) @db.Uuid
   email        String           @unique @db.VarChar(255)
   passwordHash String           @map("password_hash") @db.VarChar(255)
+  
+  // Audit Trail & Lifecycle
   isActive     Boolean          @default(true) @map("is_active")
-  createdAt    DateTime         @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt    BigInt           @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt    BigInt           @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt    BigInt?          @map("deleted_at")
+  createdBy    Int?             @map("created_by")
+  updatedBy    Int?             @map("updated_by")
+  deletedBy    Int?             @map("deleted_by")
+  version      Int              @default(1) @map("version")
 
+  // Relasi
   detail       AuthUserDetail?
   sessions     AuthUserSession[]
 
-  // Relasi Dosen Pembimbing PA (satu Dosen PA bisa membimbing banyak mahasiswa)
+  // Relasi Dosen PA ke mahasiswa bimbingan
   advisees     AuthUserDetail[] @relation("AdvisorRelation")
 
   @@map("auth_users")
@@ -34,22 +43,33 @@ model AuthUser {
 
 // 2. auth_roles: Master Peran
 model AuthRole {
-  id          String           @id @default(uuid()) @db.Uuid
+  id          Int              @id @default(autoincrement())
+  uuid        String           @unique @default(uuid()) @db.Uuid
   code        RoleCode         @unique
   name        String           @db.VarChar(100)
   description String?          @db.Text
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  
+  // Audit Trail & Lifecycle
+  isActive    Boolean          @default(true) @map("is_active")
+  createdAt   BigInt           @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt   BigInt           @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt   BigInt?          @map("deleted_at")
+  createdBy   Int?             @map("created_by")
+  updatedBy   Int?             @map("updated_by")
+  deletedBy   Int?             @map("deleted_by")
+  version     Int              @default(1) @map("version")
 
   users       AuthUserDetail[]
 
   @@map("auth_roles")
 }
 
-// 3. auth_user_details: Seluruh Informasi Civitas Akademika (Mahasiswa, Dosen, Admin)
+// 3. auth_user_details: Seluruh Informasi Civitas Akademika
 model AuthUserDetail {
-  id           String       @id @default(uuid()) @db.Uuid
-  userId       String       @unique @map("user_id") @db.Uuid
-  roleId       String       @map("role_id") @db.Uuid
+  id           Int          @id @default(autoincrement())
+  uuid         String       @unique @default(uuid()) @db.Uuid
+  userId       Int          @unique @map("user_id")
+  roleId       Int          @map("role_id")
   
   // Identifier menampung NIM (Mahasiswa), NIP (Dosen), atau ID Pegawai (Admin)
   identifier   String       @unique @db.VarChar(50)
@@ -61,15 +81,24 @@ model AuthUserDetail {
   cohort       String?      @db.VarChar(4) // Angkatan, e.g. "2024"
   gpa          Decimal?     @db.Decimal(3, 2) // IPK, e.g. 3.82
   totalCredits Int?         @default(0) @map("total_credits") // SKS Lulus, e.g. 114
-  advisorId    String?      @map("advisor_id") @db.Uuid // Relasi ke AuthUser Dosen PA
+  advisorId    Int?         @map("advisor_id") // Relasi ke auth_users(id) Dosen PA
   
   // Atribut spesifik Dosen (NULL untuk Mahasiswa)
   title        String?      @db.VarChar(100) // Gelar, e.g. "Prof. Dr. Ir."
 
-  // Atribut profil umum
+  // Profil umum
   avatarUrl    String?      @map("avatar_url") @db.VarChar(255)
   phoneNumber  String?      @map("phone_number") @db.VarChar(20)
-  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  // Audit Trail & Lifecycle
+  isActive     Boolean      @default(true) @map("is_active")
+  createdAt    BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt    BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt    BigInt?      @map("deleted_at")
+  createdBy    Int?         @map("created_by")
+  updatedBy    Int?         @map("updated_by")
+  deletedBy    Int?         @map("deleted_by")
+  version      Int          @default(1) @map("version")
 
   // Relasi
   user         AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -81,14 +110,24 @@ model AuthUserDetail {
 
 // 4. auth_user_sessions: Sesi Login & Manajemen Refresh Token
 model AuthUserSession {
-  id               String       @id @default(uuid()) @db.Uuid
-  userId           String       @map("user_id") @db.Uuid
+  id               Int          @id @default(autoincrement())
+  uuid             String       @unique @default(uuid()) @db.Uuid
+  userId           Int          @map("user_id")
   refreshTokenHash String       @map("refresh_token_hash") @db.VarChar(255)
   userAgent        String?      @map("user_agent") @db.Text
   ipAddress        String?      @map("ip_address") @db.VarChar(45)
   isRevoked        Boolean      @default(false) @map("is_revoked")
-  expiresAt        DateTime     @map("expires_at") @db.Timestamptz
-  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  expiresAt        BigInt       @map("expires_at") // Epoch expired timestamp
+
+  // Audit Trail & Lifecycle
+  isActive         Boolean      @default(true) @map("is_active")
+  createdAt        BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("created_at")
+  updatedAt        BigInt       @default(dbgenerated("(EXTRACT(epoch FROM now()))::bigint")) @map("updated_at")
+  deletedAt        BigInt?      @map("deleted_at")
+  createdBy        Int?         @map("created_by")
+  updatedBy        Int?         @map("updated_by")
+  deletedBy        Int?         @map("deleted_by")
+  version          Int          @default(1) @map("version")
 
   user             AuthUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

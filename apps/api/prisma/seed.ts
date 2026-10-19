@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Memulai proses seeding database KawanKRS...');
+  console.log('🌱 Memulai proses seeding database KawanKRS (Revisi Schema: Int ID, UUID, Epoch)...');
 
-  // 1. Bersihkan data lama (jika ada)
+  // 1. Bersihkan data lama
   await prisma.authUserSession.deleteMany();
   await prisma.authUserDetail.deleteMany();
   await prisma.authUser.deleteMany();
@@ -20,12 +20,12 @@ async function main() {
     { code: RoleCode.SUPERADMIN, name: 'Super Administrator', description: 'Peran tertinggi untuk kontrol infrastruktur dan audit logs sistem' },
   ];
 
-  const rolesMap = new Map<RoleCode, string>();
+  const rolesMap = new Map<RoleCode, number>();
   for (const r of rolesData) {
     const role = await prisma.authRole.create({ data: r });
     rolesMap.set(role.code, role.id);
   }
-  console.log('✅ 4 Master Role berhasil dibuat (MAHASISWA, DOSEN, ADMIN, SUPERADMIN)');
+  console.log('✅ 4 Master Role berhasil dibuat (ID 1, 2, 3, 4)');
 
   // 3. Hash password default: "SecretPassword123"
   const defaultPasswordHash = await bcrypt.hash('SecretPassword123', 10);
@@ -49,10 +49,10 @@ async function main() {
       },
     },
   });
-  console.log('✅ User Dosen PA (Prof. Wisnu Jatmiko) berhasil dibuat');
+  console.log(`✅ User Dosen PA (Prof. Wisnu Jatmiko, ID: ${dosenUser.id}, UUID: ${dosenUser.uuid}) berhasil dibuat`);
 
   // 5. Seed Mahasiswa (Nadya Salsabila, dibimbing oleh Prof. Wisnu)
-  await prisma.authUser.create({
+  const mhsUser = await prisma.authUser.create({
     data: {
       email: 'nadya.salsabila@kawankrs.ac.id',
       passwordHash: defaultPasswordHash,
@@ -73,10 +73,10 @@ async function main() {
       },
     },
   });
-  console.log('✅ User Mahasiswa (Nadya Salsabila) berhasil dibuat dengan Dosen PA Prof. Wisnu');
+  console.log(`✅ User Mahasiswa (Nadya Salsabila, ID: ${mhsUser.id}, UUID: ${mhsUser.uuid}) berhasil dibuat`);
 
   // 6. Seed Admin Akademik (Rina Marlina)
-  await prisma.authUser.create({
+  const adminUser = await prisma.authUser.create({
     data: {
       email: 'rina.marlina@kawankrs.ac.id',
       passwordHash: defaultPasswordHash,
@@ -93,10 +93,10 @@ async function main() {
       },
     },
   });
-  console.log('✅ User Admin Akademik (Rina Marlina) berhasil dibuat');
+  console.log(`✅ User Admin Akademik (Rina Marlina, ID: ${adminUser.id}, UUID: ${adminUser.uuid}) berhasil dibuat`);
 
   // 7. Seed Super Admin (Dr. Sarah Jenkins)
-  await prisma.authUser.create({
+  const superUser = await prisma.authUser.create({
     data: {
       email: 'sarah.jenkins@kawankrs.ac.id',
       passwordHash: defaultPasswordHash,
@@ -113,9 +113,9 @@ async function main() {
       },
     },
   });
-  console.log('✅ User Super Admin (Dr. Sarah Jenkins) berhasil dibuat');
+  console.log(`✅ User Super Admin (Dr. Sarah Jenkins, ID: ${superUser.id}, UUID: ${superUser.uuid}) berhasil dibuat`);
 
-  console.log('\n🎉 SEEDING SELESAI DENGAN SUKSES! Seluruh data akun demo siap digunakan.');
+  console.log('\n🎉 SEEDING SELESAI DENGAN SUKSES! Seluruh akun memiliki ID 1, 2, 3.. dan kolom UUID unik.');
 }
 
 main()

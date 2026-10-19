@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { 
   GraduationCap, Mail, Lock, Eye, EyeOff, ArrowRight, UserCheck, 
-  ShieldCheck, ShieldAlert, GraduationCap as StudentIcon 
+  ShieldCheck, ShieldAlert, GraduationCap as StudentIcon,
+  AlertCircle, CheckCircle2, Loader2
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -13,23 +14,70 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
   const [password, setPassword] = useState('SecretPassword123');
   const [showPassword, setShowPassword] = useState(false);
   const [selectedRole, setSelectedRole] = useState<'mahasiswa' | 'dosen' | 'admin' | 'superadmin'>('mahasiswa');
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleSelectDemoAccount = (role: 'mahasiswa' | 'dosen' | 'admin' | 'superadmin', demoEmail: string) => {
     setEmail(demoEmail);
     setPassword('SecretPassword123');
     setSelectedRole(role);
+    setErrorMessage(null);
+    setSuccessMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.includes('sarah') || email.includes('super')) {
-      onNavigate('superadmin');
-    } else if (email.includes('wisnu') || email.includes('dosen')) {
-      onNavigate('dosen');
-    } else if (email.includes('admin') || email.includes('siti') || email.includes('rina')) {
-      onNavigate('admin');
-    } else {
-      onNavigate('mahasiswa');
+    setIsLoading(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          identifier: email.trim(),
+          password,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setErrorMessage(result.message || 'Gagal masuk. Periksa kembali email/NIM dan password Anda.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Simpan session token & data profil user ke localStorage
+      if (result.data) {
+        localStorage.setItem('kawan_krs_token', result.data.sessionToken);
+        localStorage.setItem('kawan_krs_user', JSON.stringify(result.data.user));
+      }
+
+      const userName = result.data?.user?.fullName || 'Pengguna';
+      const userRole = (result.data?.user?.role || 'mahasiswa').toLowerCase();
+      setSuccessMessage(`Login berhasil! Selamat datang, ${userName}. Mengalihkan...`);
+
+      setTimeout(() => {
+        if (userRole === 'superadmin') {
+          onNavigate('superadmin');
+        } else if (userRole === 'admin') {
+          onNavigate('admin');
+        } else if (userRole === 'dosen') {
+          onNavigate('dosen');
+        } else {
+          onNavigate('mahasiswa');
+        }
+      }, 500);
+    } catch (err) {
+      console.error('Login error:', err);
+      setErrorMessage('Tidak dapat terhubung ke server API. Pastikan server backend sedang aktif di port 3001.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -160,6 +208,24 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
             </div>
           </div>
 
+          {/* Alert Messages */}
+          {errorMessage && (
+            <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2.5 animate-fadeIn shadow-xs">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold">Gagal Masuk</p>
+                <p className="text-red-600 mt-0.5 leading-relaxed">{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-start gap-2.5 animate-fadeIn shadow-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <p className="font-semibold leading-relaxed">{successMessage}</p>
+            </div>
+          )}
+
           {/* Form Login Asli (Email & Password) */}
           <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-1.5">
@@ -171,10 +237,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 <input 
                   type="text" 
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@kawankrs.ac.id" 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
+                  placeholder="nama@kawankrs.ac.id atau 2106721094" 
                   required
-                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
               </div>
             </div>
@@ -188,10 +258,14 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
                 <input 
                   type={showPassword ? 'text' : 'password'}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errorMessage) setErrorMessage(null);
+                  }}
                   placeholder="••••••••" 
                   required
-                  className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-10 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
                 <button 
                   type="button" 
@@ -215,10 +289,20 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
             <button 
               type="submit" 
-              className="w-full bg-[#8b1818] hover:bg-[#721313] text-white font-medium py-3 px-4 rounded-xl transition-all shadow-md shadow-red-950/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99]"
+              disabled={isLoading}
+              className="w-full bg-[#8b1818] hover:bg-[#721313] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-xl transition-all shadow-md shadow-red-950/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99]"
             >
-              <span>Masuk</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Memverifikasi...</span>
+                </>
+              ) : (
+                <>
+                  <span>Masuk</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 

@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { GraduationCap, Mail, Lock, User, Hash, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { 
+  GraduationCap, Mail, Lock, User, Hash, Eye, EyeOff, ArrowRight,
+  AlertCircle, CheckCircle2, Loader2 
+} from 'lucide-react';
 
 interface RegisterPageProps {
   onNavigate: (view: 'login' | 'register' | 'mahasiswa' | 'dosen' | 'admin') => void;
@@ -15,18 +18,68 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
     confirmPassword: '',
   });
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+    if (errorMessage) setErrorMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Registrasi berhasil! Silakan masuk dengan akun yang baru didaftarkan.');
-    onNavigate('login');
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage('Konfirmasi password tidak cocok dengan password yang Anda masukkan.');
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setErrorMessage('Password minimal harus terdiri dari 8 karakter.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          identifier: formData.identifier,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setErrorMessage(result.message || 'Pendaftaran akun gagal. Silakan periksa data Anda.');
+        setIsLoading(false);
+        return;
+      }
+
+      setSuccessMessage('Pendaftaran akun KawanKRS berhasil! Mengalihkan ke halaman login...');
+      setTimeout(() => {
+        onNavigate('login');
+      }, 1500);
+    } catch (err) {
+      console.error('Registration error:', err);
+      setErrorMessage('Tidak dapat terhubung ke server backend API. Pastikan server aktif di port 3001.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -80,6 +133,24 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
             <p className="text-sm text-gray-500">Lengkapi data diri Anda untuk pendaftaran akun baru</p>
           </div>
 
+          {/* Alert Messages */}
+          {errorMessage && (
+            <div className="mb-4 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-start gap-2.5 animate-fadeIn shadow-xs">
+              <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold">Gagal Mendaftar</p>
+                <p className="text-red-600 mt-0.5 leading-relaxed">{errorMessage}</p>
+              </div>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="mb-4 p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-start gap-2.5 animate-fadeIn shadow-xs">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+              <p className="font-semibold leading-relaxed">{successMessage}</p>
+            </div>
+          )}
+
           <form className="space-y-4" onSubmit={handleSubmit}>
             {/* Full Name */}
             <div className="space-y-1">
@@ -95,7 +166,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   onChange={handleChange}
                   placeholder="Nadya Salsabila" 
                   required
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
               </div>
             </div>
@@ -108,7 +180,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   name="role"
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800 cursor-pointer"
+                  disabled={isLoading}
+                  className="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800 cursor-pointer"
                 >
                   <option value="mahasiswa">Mahasiswa</option>
                   <option value="dosen">Dosen Wali</option>
@@ -129,7 +202,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                     onChange={handleChange}
                     placeholder="2106721094" 
                     required
-                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                    disabled={isLoading}
+                    className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                   />
                 </div>
               </div>
@@ -149,7 +223,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   onChange={handleChange}
                   placeholder="nadya.salsabila@kawankrs.ac.id" 
                   required
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
               </div>
             </div>
@@ -168,7 +243,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   onChange={handleChange}
                   placeholder="Minimal 8 karakter" 
                   required
-                  className="w-full pl-10 pr-10 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-10 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
                 <button 
                   type="button" 
@@ -194,7 +270,8 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
                   onChange={handleChange}
                   placeholder="Ulangi password" 
                   required
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 transition-all text-gray-800"
+                  disabled={isLoading}
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-600 disabled:bg-gray-50 disabled:text-gray-400 transition-all text-gray-800"
                 />
               </div>
             </div>
@@ -210,10 +287,20 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
 
             <button 
               type="submit" 
-              className="w-full bg-[#8b1818] hover:bg-[#721313] text-white font-medium py-2.5 px-4 rounded-xl transition-all shadow-md shadow-red-950/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99] mt-2"
+              disabled={isLoading}
+              className="w-full bg-[#8b1818] hover:bg-[#721313] disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-2.5 px-4 rounded-xl transition-all shadow-md shadow-red-950/10 flex justify-center items-center gap-2 cursor-pointer active:scale-[0.99] mt-2"
             >
-              <span>Daftar Sekarang</span>
-              <ArrowRight className="w-4 h-4" />
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Mendaftarkan Akun...</span>
+                </>
+              ) : (
+                <>
+                  <span>Daftar Sekarang</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </form>
 

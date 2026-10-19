@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "pnpm --parallel dev",
     "dev:web": "pnpm --filter web dev",
-    "dev:api": "pnpm --filter api dev",
+    "dev:api": "pnpm --filter @kawan-krs/api dev",
     "build:web": "pnpm --filter web build",
-    "build:api": "pnpm --filter api build"
+    "build:api": "pnpm --filter @kawan-krs/api build",
+    "studio": "pnpm --filter @kawan-krs/api exec prisma studio"
   },
   "engines": {
     "node": ">=20",

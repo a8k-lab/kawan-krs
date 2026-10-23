@@ -1,3 +1,4 @@
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   GraduationCap,
   Mail,
@@ -13,13 +14,8 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 
-interface RegisterPageProps {
-  onNavigate: (
-    view: "login" | "register" | "mahasiswa" | "dosen" | "admin"
-  ) => void;
-}
-
-export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
+export function RegisterPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: "",
     identifier: "",
@@ -91,7 +87,7 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
         "Pendaftaran akun KawanKRS berhasil! Mengalihkan ke halaman login..."
       );
       setTimeout(() => {
-        onNavigate("login");
+        void navigate({ to: "/login" });
       }, 1500);
     } catch (err) {
       console.error("Registration error:", err);
@@ -363,13 +359,13 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
           <div className="mt-5 text-center">
             <p className="text-xs text-gray-600">
               Sudah memiliki akun?{" "}
-              <button
-                type="button"
-                onClick={() => onNavigate("login")}
+              <Link
+                to="/login"
+                activeOptions={{ exact: true }}
                 className="cursor-pointer font-bold text-red-700 hover:text-red-800 hover:underline"
               >
                 Masuk di sini
-              </button>
+              </Link>
             </p>
           </div>
 
@@ -382,4 +378,4 @@ export const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigate }) => {
       </div>
     </div>
   );
-};
+}

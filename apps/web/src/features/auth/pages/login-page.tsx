@@ -1,3 +1,4 @@
+import { Link, useNavigate } from "@tanstack/react-router";
 import {
   GraduationCap,
   Mail,
@@ -15,13 +16,8 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 
-interface LoginPageProps {
-  onNavigate: (
-    view: "login" | "register" | "mahasiswa" | "dosen" | "admin" | "superadmin"
-  ) => void;
-}
-
-export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
+export function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("nadya.salsabila@kawankrs.ac.id");
   const [password, setPassword] = useState("SecretPassword123");
   const [showPassword, setShowPassword] = useState(false);
@@ -89,13 +85,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
 
       setTimeout(() => {
         if (userRole === "superadmin") {
-          onNavigate("superadmin");
+          void navigate({ to: "/superadmin" });
         } else if (userRole === "admin") {
-          onNavigate("admin");
+          void navigate({ to: "/admin" });
         } else if (userRole === "dosen") {
-          onNavigate("dosen");
+          void navigate({ to: "/dosen/mahasiswa" });
         } else {
-          onNavigate("mahasiswa");
+          void navigate({ to: "/mahasiswa/rekomendasi" });
         }
       }, 500);
     } catch (err) {
@@ -412,13 +408,13 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
           <div className="mt-6 text-center">
             <p className="text-xs text-gray-600">
               Belum memiliki akun KawanKRS?{" "}
-              <button
-                type="button"
-                onClick={() => onNavigate("register")}
+              <Link
+                to="/register"
+                activeOptions={{ exact: true }}
                 className="cursor-pointer font-bold text-red-700 hover:text-red-800 hover:underline"
               >
                 Daftar sekarang
-              </button>
+              </Link>
             </p>
           </div>
 
@@ -431,4 +427,4 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onNavigate }) => {
       </div>
     </div>
   );
-};
+}

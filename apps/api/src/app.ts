@@ -1,16 +1,17 @@
-import { Hono } from 'hono';
-import { cors } from 'hono/cors';
-import { authRoutes } from './routes/auth.js';
+import { Hono } from "hono";
+import { cors } from "hono/cors";
 
-const app = new Hono().basePath('/api');
+import { authRoutes } from "./routes/auth.js";
 
-app.use('*', cors());
+const app = new Hono().basePath("/api");
+
+app.use("*", cors());
 
 const routes = app
-  .get('/health', (c) => {
-    return c.json({ status: 'ok', message: 'KawanKRS API is running' });
+  .get("/health", (c) => {
+    return c.json({ status: "ok", message: "KawanKRS API is running" });
   })
-  .route('/auth', authRoutes);
+  .route("/auth", authRoutes);
 
 export type AppType = typeof routes;
 export { app };

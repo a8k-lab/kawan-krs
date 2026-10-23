@@ -23,6 +23,8 @@
     "**/coverage/**",
     "**/*.generated.*",
     "pnpm-lock.yaml",
-    "**/routeTree.gen.ts"
+    "**/routeTree.gen.ts",
+    ".agents/**",
+    "docs/**"
   ]
 }
